@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Survey Predictor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        body {
+            background-color: #f0f4f8;
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .custom-select {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .custom-select select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .custom-select select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="card bg-white p-8 rounded-2xl shadow-md w-full max-w-lg">
+            <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">Doctor Survey Predictor</h1>
+            <p class="text-center text-gray-600 mb-6">Select a time to predict which doctors are likely to attend the survey.</p>
+
+            <form id="predictionForm" class="space-y-6">
+                <div class="custom-select">
+                    <select id="hourSelect" required>
+                        <!-- Hours from 1 to 12 -->
+                        <script>
+                            for (let hour = 1; hour <= 12; hour++) {
+                                document.write(`<option value="${hour}">${hour}</option>`);
+                            }
+                        </script>
+                    </select>
+                    <select id="minuteSelect" required>
+                        <option value="00">00</option>
+                        <option value="30">30</option>
+                    </select>
+                    <select id="ampmSelect" required>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">Predict</button>
+            </form>
+
+            <div id="message" class="mt-6 text-center"></div>
+            <a id="downloadLink" href="#" class="text-blue-600 hover:underline mt-4 block hidden text-center">Download Predicted NPIs</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const hour = document.getElementById('hourSelect').value;
+            const minute = document.getElementById('minuteSelect').value;
+            const ampm = document.getElementById('ampmSelect').value;
+
+            let hour24 = parseInt(hour);
+            if (ampm === 'PM' && hour24 !== 12) hour24 += 12;
+            if (ampm === 'AM' && hour24 === 12) hour24 = 0;
+
+            const timeInput = `${String(hour24).padStart(2, '0')}:${minute}`;
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ time: timeInput })
+            });
+
+            const result = await response.json();
+            const messageDiv = document.getElementById('message');
+            const downloadLink = document.getElementById('downloadLink');
+
+            if (result.success) {
+                messageDiv.innerHTML = `<p class="text-green-600 font-medium">${result.message}</p>`;
+                downloadLink.href = '/download';
+                downloadLink.classList.remove('hidden');
+            } else {
+                messageDiv.innerHTML = `<p class="text-red-600 font-medium">${result.message}</p>`;
+                downloadLink.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
