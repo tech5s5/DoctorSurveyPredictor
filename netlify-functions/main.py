@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import pandas as pd
 import joblib
 import os
-
+from mangum import Mangum
 app = FastAPI()
 
 # Load the trained model and encoders from the 'models' folder
